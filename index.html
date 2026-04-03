@@ -43,22 +43,16 @@
   }
 
   /* === CAROUSEL === */
-  .carousel {
+  .carousel { flex: 0 0 auto; }
+  .track {
+    display: flex;
     overflow-x: auto;
-    overflow-y: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    flex: 0 0 auto;
-    display: flex;
   }
-  .carousel::-webkit-scrollbar { display: none; }
-  .slide {
-    min-width: 100%;
-    flex-shrink: 0;
-    scroll-snap-align: start;
-    padding: 0 28px;
-  }
+  .track::-webkit-scrollbar { display: none; }
+  .slide { min-width: 100%; flex-shrink: 0; scroll-snap-align: start; padding: 0 28px; }
 
   /* === CARD === */
   .card {
@@ -217,7 +211,8 @@
     </div>
   </div>
 
-  <div class="carousel" id="carousel">
+  <div class="carousel">
+    <div class="track" id="track">
 
       <div class="slide"><div class="card">
         <div class="card-top">
@@ -342,12 +337,13 @@
         </div>
       </div></div>
 
-  </div>
-  <div class="dots" id="dots">
-    <div class="dot on"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
+    </div>
+    <div class="dots" id="dots">
+      <div class="dot on"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
   </div>
 
   <div class="hnr">
@@ -356,13 +352,13 @@
 </div>
 
 <script>
-var el=document.getElementById('carousel'),
+var t=document.getElementById('track'),
     dots=document.querySelectorAll('.dot'),
     slides=document.querySelectorAll('.slide');
 
-el.addEventListener('scroll',function(){
+t.addEventListener('scroll',function(){
   var w=slides[0].offsetWidth;
-  var i=Math.round(el.scrollLeft/w);
+  var i=Math.round(t.scrollLeft/w);
   dots.forEach(function(d,j){d.classList.toggle('on',j===i)});
 },{passive:true});
 </script>
