@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Edit Tickets</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  background: #000; color: #fff;
+  padding: 20px; padding-top: max(20px, env(safe-area-inset-top));
+  -webkit-font-smoothing: antialiased;
+}
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 20px; }
+.ticket-card {
+  background: #1c1c1e; border-radius: 12px;
+  padding: 16px; margin-bottom: 14px;
+  position: relative;
+}
+.ticket-card h3 {
+  font-size: 15px; font-weight: 600; color: #4d9bff;
+  margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.field { margin-bottom: 10px; }
+.field label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.field input {
+  width: 100%; background: #2c2c2e; border: none; border-radius: 8px;
+  color: #fff; font-size: 16px; padding: 10px 12px;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
+.field input:focus { outline: 2px solid #4d9bff; }
+.row2 { display: flex; gap: 10px; }
+.row2 .field { flex: 1; }
+.row3 { display: flex; gap: 10px; }
+.row3 .field { flex: 1; }
+.btn-delete {
+  position: absolute; top: 14px; right: 14px;
+  background: #ff3b30; color: #fff; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; padding: 6px 12px;
+  font-family: inherit; cursor: pointer;
+}
+.btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-size: 17px; font-weight: 600; font-family: inherit;
+  cursor: pointer; margin-bottom: 10px;
+}
+.btn-add { background: #2c2c2e; color: #4d9bff; }
+.btn-save { background: #4d9bff; color: #fff; }
+.btn-view { background: #1c1c1e; color: #8e8e93; }
+.btn-reset { background: #1c1c1e; color: #ff3b30; }
+.saved-msg {
+  text-align: center; color: #30d158; font-weight: 600;
+  font-size: 15px; padding: 10px 0; display: none;
+}
+</style>
+</head>
+<body>
+
+<h1>Edit Tickets</h1>
+<div id="list"></div>
+<button class="btn btn-add" onclick="addTicket()">+ Add Ticket</button>
+<div class="saved-msg" id="saved">Saved!</div>
+<button class="btn btn-save" onclick="save()">Save & View Wallet</button>
+<button class="btn btn-view" onclick="location.href='index.html'">View Wallet</button>
+<button class="btn btn-reset" onclick="resetTickets()">Reset to Defaults</button>
+
+<script>
+var defaultTickets = [
+  { time: "7:00 PM", date: "Apr 3, 2026", venue: "SOFI STADIUM", event: "YE - LIVE IN LOS ANGELES", section: "GAFLR", row: "GA9", seat: "-", entry: "GA", type: "Standard Ticket" },
+  { time: "7:00 PM", date: "Apr 3, 2026", venue: "SOFI STADIUM", event: "YE - LIVE IN LOS ANGELES", section: "GAFLR", row: "GA9", seat: "-", entry: "GA", type: "Standard Ticket" },
+  { time: "7:00 PM", date: "Apr 3, 2026", venue: "SOFI STADIUM", event: "YE - LIVE IN LOS ANGELES", section: "VIP112", row: "11", seat: "9", entry: "Entry 3", type: "Standard Ticket" },
+  { time: "7:00 PM", date: "Apr 3, 2026", venue: "SOFI STADIUM", event: "YE - LIVE IN LOS ANGELES", section: "VIP112", row: "11", seat: "10", entry: "Entry 3", type: "Standard Ticket" }
+];
+
+var saved = localStorage.getItem('wallet_tickets');
+var tickets = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultTickets));
+
+function render() {
+  var h = '';
+  tickets.forEach(function(t, i) {
+    h += '<div class="ticket-card">' +
+      '<h3>Ticket ' + (i+1) + '</h3>' +
+      '<button class="btn-delete" onclick="del(' + i + ')">Delete</button>' +
+      '<div class="field"><label>Event</label><input value="' + esc(t.event) + '" onchange="upd(' + i + ',\'event\',this.value)"></div>' +
+      '<div class="field"><label>Venue</label><input value="' + esc(t.venue) + '" onchange="upd(' + i + ',\'venue\',this.value)"></div>' +
+      '<div class="row2">' +
+        '<div class="field"><label>Time</label><input value="' + esc(t.time) + '" onchange="upd(' + i + ',\'time\',this.value)"></div>' +
+        '<div class="field"><label>Date</label><input value="' + esc(t.date) + '" onchange="upd(' + i + ',\'date\',this.value)"></div>' +
+      '</div>' +
+      '<div class="row3">' +
+        '<div class="field"><label>Section</label><input value="' + esc(t.section) + '" onchange="upd(' + i + ',\'section\',this.value)"></div>' +
+        '<div class="field"><label>Row</label><input value="' + esc(t.row) + '" onchange="upd(' + i + ',\'row\',this.value)"></div>' +
+        '<div class="field"><label>Seat</label><input value="' + esc(t.seat) + '" onchange="upd(' + i + ',\'seat\',this.value)"></div>' +
+      '</div>' +
+      '<div class="row2">' +
+        '<div class="field"><label>Entry Info</label><input value="' + esc(t.entry) + '" onchange="upd(' + i + ',\'entry\',this.value)"></div>' +
+        '<div class="field"><label>Ticket Type</label><input value="' + esc(t.type) + '" onchange="upd(' + i + ',\'type\',this.value)"></div>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('list').innerHTML = h;
+}
+
+function esc(s) { return s.replace(/"/g, '&quot;'); }
+
+function upd(i, key, val) { tickets[i][key] = val; }
+
+function del(i) {
+  tickets.splice(i, 1);
+  render();
+}
+
+function addTicket() {
+  var last = tickets.length > 0 ? tickets[tickets.length-1] : defaultTickets[0];
+  tickets.push({
+    time: last.time, date: last.date, venue: last.venue, event: last.event,
+    section: "", row: "", seat: "", entry: last.entry, type: last.type
+  });
+  render();
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function save() {
+  localStorage.setItem('wallet_tickets', JSON.stringify(tickets));
+  location.href = 'index.html';
+}
+
+function resetTickets() {
+  if (confirm('Reset all tickets to defaults?')) {
+    tickets = JSON.parse(JSON.stringify(defaultTickets));
+    localStorage.removeItem('wallet_tickets');
+    render();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
