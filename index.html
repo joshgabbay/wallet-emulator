@@ -51,7 +51,7 @@
     display: flex;
     transition: transform 0.4s cubic-bezier(0.2,0.8,0.3,1);
     -webkit-user-select: none; user-select: none;
-    touch-action: pan-y;
+    touch-action: none;
   }
   .track.drag { transition: none; }
   .slide { min-width: 100%; padding: 0 28px; }
@@ -372,20 +372,25 @@ t.addEventListener('touchstart',function(e){
   sx=cx=e.touches[0].clientX;
   sy=e.touches[0].clientY;
   isH=null;drag=true;t.classList.add('drag');
-},{passive:true});
+},{passive:false});
 t.addEventListener('touchmove',function(e){
   if(!drag)return;
   cx=e.touches[0].clientX;
   var dy=e.touches[0].clientY-sy;
-  if(isH===null) isH=Math.abs(cx-sx)>Math.abs(dy);
+  if(isH===null&&(Math.abs(cx-sx)>5||Math.abs(dy)>5)){
+    isH=Math.abs(cx-sx)>=Math.abs(dy);
+  }
   if(isH){
     e.preventDefault();
+    e.stopPropagation();
     t.style.transform='translateX('+(-(c*sw())+(cx-sx))+'px)';
+  } else if(isH===false){
+    drag=false;t.classList.remove('drag');
   }
 },{passive:false});
 t.addEventListener('touchend',function(){
   if(!drag)return;drag=false;t.classList.remove('drag');
-  if(isH){var df=cx-sx;Math.abs(df)>50?go(df<0?c+1:c-1):go(c);}
+  if(isH){var df=cx-sx;Math.abs(df)>30?go(df<0?c+1:c-1):go(c);}
   isH=null;
 });
 
