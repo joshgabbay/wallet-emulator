@@ -359,9 +359,11 @@ var t=document.getElementById('track'),
     n=document.querySelectorAll('.slide').length,
     c=0,sx=0,cx=0,drag=false;
 
+function sw(){return document.documentElement.clientWidth;}
+
 function go(i){
   c=Math.max(0,Math.min(i,n-1));
-  t.style.transform='translateX(-'+(c*100)+'%)';
+  t.style.transform='translateX('+(-(c*sw()))+'px)';
   d.forEach(function(e,j){e.classList.toggle('on',j===c)});
 }
 
@@ -378,7 +380,7 @@ t.addEventListener('touchmove',function(e){
   if(isH===null) isH=Math.abs(cx-sx)>Math.abs(dy);
   if(isH){
     e.preventDefault();
-    t.style.transform='translateX('+(-(c*t.parentElement.offsetWidth)+(cx-sx))+'px)';
+    t.style.transform='translateX('+(-(c*sw())+(cx-sx))+'px)';
   }
 },{passive:false});
 t.addEventListener('touchend',function(){
@@ -388,8 +390,9 @@ t.addEventListener('touchend',function(){
 });
 
 t.addEventListener('mousedown',function(e){sx=cx=e.clientX;drag=true;t.classList.add('drag');e.preventDefault()});
-document.addEventListener('mousemove',function(e){if(!drag)return;cx=e.clientX;t.style.transform='translateX('+(-(c*t.parentElement.offsetWidth)+(cx-sx))+'px)'});
+document.addEventListener('mousemove',function(e){if(!drag)return;cx=e.clientX;t.style.transform='translateX('+(-(c*sw())+(cx-sx))+'px)'});
 document.addEventListener('mouseup',function(){if(!drag)return;drag=false;t.classList.remove('drag');var df=cx-sx;Math.abs(df)>50?go(df<0?c+1:c-1):go(c)});
+window.addEventListener('resize',function(){go(c)});
 </script>
 </body>
 </html>
