@@ -191,6 +191,71 @@
     height: auto;
     margin-bottom: 0;
   }
+
+  /* === EDIT PANEL === */
+  .edit-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    z-index: 100;
+    overflow-y: auto;
+    padding: 20px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+  .edit-panel.open { display: block; }
+  .edit-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+  .edit-header h1 { font-size: 28px; font-weight: 700; }
+  .edit-close {
+    background: #2c2c2e; color: #4d9bff; border: none;
+    border-radius: 8px; padding: 8px 16px;
+    font-size: 15px; font-weight: 600; font-family: inherit;
+    cursor: pointer;
+  }
+  .ticket-card {
+    background: #1c1c1e; border-radius: 12px;
+    padding: 16px; margin-bottom: 14px;
+    position: relative;
+  }
+  .ticket-card h3 {
+    font-size: 15px; font-weight: 600; color: #4d9bff;
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .efield { margin-bottom: 10px; }
+  .efield label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .efield input {
+    width: 100%; background: #2c2c2e; border: none; border-radius: 8px;
+    color: #fff; font-size: 16px; padding: 10px 12px;
+    font-family: inherit; -webkit-appearance: none;
+  }
+  .efield input:focus { outline: 2px solid #4d9bff; }
+  .erow2 { display: flex; gap: 10px; }
+  .erow2 .efield { flex: 1; }
+  .erow3 { display: flex; gap: 10px; }
+  .erow3 .efield { flex: 1; }
+  .btn-delete {
+    position: absolute; top: 14px; right: 14px;
+    background: #ff3b30; color: #fff; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; padding: 6px 12px;
+    font-family: inherit; cursor: pointer;
+  }
+  .ebtn {
+    width: 100%; padding: 14px; border: none; border-radius: 12px;
+    font-size: 17px; font-weight: 600; font-family: inherit;
+    cursor: pointer; margin-bottom: 10px;
+  }
+  .ebtn-add { background: #2c2c2e; color: #4d9bff; }
+  .ebtn-save { background: #4d9bff; color: #fff; }
+  .ebtn-reset { background: #1c1c1e; color: #ff3b30; }
 </style>
 </head>
 <body>
@@ -202,13 +267,24 @@
         <line x1="12" y1="1" x2="1" y2="12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
     </div>
-    <div class="btn-circle">
+    <div class="btn-circle" id="editBtn" onclick="openEdit()">
       <svg width="17" height="5" viewBox="0 0 17 5" fill="none">
         <circle cx="2.5" cy="2.5" r="2.2" fill="#fff"/>
         <circle cx="8.5" cy="2.5" r="2.2" fill="#fff"/>
         <circle cx="14.5" cy="2.5" r="2.2" fill="#fff"/>
       </svg>
     </div>
+  </div>
+
+  <div id="editPanel" class="edit-panel">
+    <div class="edit-header">
+      <h1>Edit Tickets</h1>
+      <button class="edit-close" onclick="closeEdit()">Done</button>
+    </div>
+    <div id="editList"></div>
+    <button class="ebtn ebtn-add" onclick="addTicket()">+ Add Ticket</button>
+    <button class="ebtn ebtn-save" onclick="saveEdits()">Save</button>
+    <button class="ebtn ebtn-reset" onclick="resetTickets()">Reset to Defaults</button>
   </div>
 
   <div class="carousel">
@@ -293,6 +369,91 @@ track.addEventListener('scroll', function() {
   var i = Math.round(track.scrollLeft / w);
   dots.forEach(function(d, j) { d.classList.toggle('on', j === i); });
 }, {passive: true});
+
+// ===== EDIT PANEL =====
+function renderCarousel() {
+  var html = '';
+  tickets.forEach(function(t) { html += buildCard(t); });
+  track.innerHTML = html;
+  var dotsHtml = '';
+  tickets.forEach(function(_, i) {
+    dotsHtml += '<div class="dot' + (i === 0 ? ' on' : '') + '"></div>';
+  });
+  dotsEl.innerHTML = dotsHtml;
+  slides = document.querySelectorAll('.slide');
+  dots = document.querySelectorAll('.dot');
+}
+
+function escAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+
+function renderEditList() {
+  var h = '';
+  tickets.forEach(function(t, i) {
+    h += '<div class="ticket-card">' +
+      '<h3>Ticket ' + (i+1) + '</h3>' +
+      '<button class="btn-delete" onclick="delTicket(' + i + ')">Delete</button>' +
+      '<div class="efield"><label>Event</label><input value="' + escAttr(t.event) + '" oninput="upd(' + i + ',\'event\',this.value)"></div>' +
+      '<div class="efield"><label>Venue</label><input value="' + escAttr(t.venue) + '" oninput="upd(' + i + ',\'venue\',this.value)"></div>' +
+      '<div class="erow2">' +
+        '<div class="efield"><label>Time</label><input value="' + escAttr(t.time) + '" oninput="upd(' + i + ',\'time\',this.value)"></div>' +
+        '<div class="efield"><label>Date</label><input value="' + escAttr(t.date) + '" oninput="upd(' + i + ',\'date\',this.value)"></div>' +
+      '</div>' +
+      '<div class="erow3">' +
+        '<div class="efield"><label>Section</label><input value="' + escAttr(t.section) + '" oninput="upd(' + i + ',\'section\',this.value)"></div>' +
+        '<div class="efield"><label>Row</label><input value="' + escAttr(t.row) + '" oninput="upd(' + i + ',\'row\',this.value)"></div>' +
+        '<div class="efield"><label>Seat</label><input value="' + escAttr(t.seat) + '" oninput="upd(' + i + ',\'seat\',this.value)"></div>' +
+      '</div>' +
+      '<div class="erow2">' +
+        '<div class="efield"><label>Entry Info</label><input value="' + escAttr(t.entry) + '" oninput="upd(' + i + ',\'entry\',this.value)"></div>' +
+        '<div class="efield"><label>Ticket Type</label><input value="' + escAttr(t.type) + '" oninput="upd(' + i + ',\'type\',this.value)"></div>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('editList').innerHTML = h;
+}
+
+function upd(i, key, val) { tickets[i][key] = val; }
+
+function delTicket(i) {
+  tickets.splice(i, 1);
+  renderEditList();
+}
+
+function addTicket() {
+  var last = tickets.length > 0 ? tickets[tickets.length-1] : defaultTickets[0];
+  tickets.push({
+    time: last.time, date: last.date, venue: last.venue, event: last.event,
+    section: "", row: "", seat: "", entry: last.entry, type: last.type
+  });
+  renderEditList();
+  var p = document.getElementById('editPanel');
+  p.scrollTop = p.scrollHeight;
+}
+
+function saveEdits() {
+  localStorage.setItem('wallet_tickets', JSON.stringify(tickets));
+  renderCarousel();
+  closeEdit();
+}
+
+function resetTickets() {
+  if (confirm('Reset all tickets to defaults?')) {
+    tickets = JSON.parse(JSON.stringify(defaultTickets));
+    localStorage.removeItem('wallet_tickets');
+    renderEditList();
+    renderCarousel();
+  }
+}
+
+function openEdit() {
+  renderEditList();
+  document.getElementById('editPanel').classList.add('open');
+}
+
+if (location.hash === '#edit') openEdit();
+function closeEdit() {
+  document.getElementById('editPanel').classList.remove('open');
+}
 </script>
 </body>
 </html>
